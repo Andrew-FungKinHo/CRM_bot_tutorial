@@ -1,7 +1,11 @@
 from ast import parse
+from genericpath import isfile
 import requests
 from flask import Flask, jsonify,request
 import json
+import os 
+import time
+import datetime
 
 TOKEN = '5780584485:AAHHZ2r5hl-n1tii7xs8tnA59_CHskI--KU'
 NOTION_BEAR_TOKEN = 'secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL'
@@ -49,9 +53,52 @@ def loadUsernames():
                 # check its status
                 if entry['properties']['Status']['select']:
                     # { username: (selected_product, status, page id) }
-                    username_dict[entry['properties']['User']['title'][0]['text']['content']] = (entry['properties']['Product']['select']['name'],entry['properties']['Status']['select']['name'],entry['url'])
+                    username_dict[entry['properties']['User']['title'][0]['text']['content']] = (entry['properties']['Product']['select']['name'],entry['properties']['Status']['select']['name'],entry['id'])
     return username_dict
 
+def sendMessage(msg,item):
+    chat_id = item['chat']['id']
+    user_id = item["from"]["id"]
+    username = item['from']["username"]
+
+    new_msg = f'{msg} {username}'
+    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={new_msg}&parse_mode=HTML'
+    resp = requests.post(to_url)
+
+def sendLocalSourceFiles(item, product):
+    chat_id = item['chat']['id']
+    directory = os.getcwd() + f'/sourceFiles/{product}'
+
+    for filename in os.listdir(directory):
+        f = os.path.join(directory,filename)
+        # check if it is a file
+        if os.path.isfile(f):
+            doc = open(os.path.join(directory,filename), 'rb')
+            files = {'document': doc}
+            to_url = 'https://api.telegram.org/bot{}/sendDocument?chat_id={}&parse_mode=HTML'.format(TOKEN,chat_id)
+            resp = requests.post(to_url,files=files)
+            print(f'File:   {filename} is sent')
+            time.sleep(0.75)
+
+def turnStatusToClosed(page_id):
+    url = f"https://api.notion.com/v1/pages/{page_id}"
+
+    payload = {
+        "properties": {
+            "Status": {"select": {"name": "Closed"}},
+            "Date": {"date": {"start": datetime.datetime.today().strftime("%Y-%m-%d")}}
+        }
+    }
+    headers = {
+        "accept": "application/json",
+        "Notion-Version": "2022-06-28",
+        "content-type": "application/json",
+        "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
+    }
+
+    response = requests.patch(url, headers=headers)
+
+    print(response.text)
 
 
 def welcome_message(item):
@@ -67,22 +114,16 @@ def welcome_message(item):
             if username in customers.keys():
                 print(customers[username])
                 if customers[username][1] == 'Pending':
-                    msg = f'sending {customers[username][0]} information'
-                    welcome_msg = f'{msg} {username}'
-                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
-                    resp = requests.get(to_url)
+                    sendMessage(f'sending {customers[username][0]} information',item)
+                    sendLocalSourceFiles(item,customers[username][0])
+                    # close their requests (turn their status from pending to closed)
+                    turnStatusToClosed(customers[username][2])
                     return 
                 elif customers[username][1] == 'Closed':
-                    msg = f'Your previous request has been closed. Please contact the admins for further information.'
-                    welcome_msg = f'{msg} {username}'
-                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
-                    resp = requests.get(to_url)
+                    sendMessage(f'Your previous request has been closed. Please contact the admins for further information.',item)
                     return 
                 else:
-                    msg = f'Unknown user. Please contact the admins for further information.'
-                    welcome_msg = f'{msg} {username}'
-                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
-                    resp = requests.get(to_url)
+                    sendMessage(f'Unknown user. Please contact the admins for further information.',item)
                     return
                     
 @app.route("/", methods=['GET','POST'])
