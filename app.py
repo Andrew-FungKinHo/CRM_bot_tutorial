@@ -1,3 +1,4 @@
+from ast import parse
 import requests
 from flask import Flask, jsonify,request
 import json
@@ -20,18 +21,69 @@ sample_response =  {
         }
 }
 
+# load all the username from the notion spreadsheet and return a dictionary in the format 
+def loadUsernames():
+    url = "https://api.notion.com/v1/databases/dc9c9681720a4941a317e75312ab9d69/query"
+
+    payload = {"page_size": 100}
+    headers = {
+        "accept": "application/json",
+        "Notion-Version": "2022-06-28",
+        "content-type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    data = response.text
+    # turn JSON string back into python dictionary
+    parsed = json.loads(data)
+
+    username_dict = {}
+
+    for entry in parsed['results']:
+        # check its username
+        if entry['properties']['User']['title']:
+            # check its product
+            if entry['properties']['Product']['select']:
+                # check its status
+                if entry['properties']['Status']['select']:
+                    # { username: (selected_product, status, page id) }
+                    username_dict[entry['properties']['User']['title'][0]['text']['content']] = (entry['properties']['Product']['select']['name'],entry['properties']['Status']['select']['name'],entry['url'])
+    return username_dict
+
+
+
 def welcome_message(item):
     print(item)
-    if item['text'].lower() == 'hi':
-        msg = 'hello'
-        chat_id = item['chat']['id']
-        user_id = item["from"]["id"]
-        username = item['from']["username"]
-        welcome_msg = f'{msg} {username}'
 
-        to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
-        resp = requests.get(to_url)
+    chat_id = item['chat']['id']
+    user_id = item["from"]["id"]
+    username = item['from']["username"]
+    customers = loadUsernames()
 
+    if 'text' in item:
+        if item['text'].lower() == '/start':
+            if username in customers.keys():
+                print(customers[username])
+                if customers[username][1] == 'Pending':
+                    msg = f'sending {customers[username][0]} information'
+                    welcome_msg = f'{msg} {username}'
+                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
+                    resp = requests.get(to_url)
+                    return 
+                elif customers[username][1] == 'Closed':
+                    msg = f'Your previous request has been closed. Please contact the admins for further information.'
+                    welcome_msg = f'{msg} {username}'
+                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
+                    resp = requests.get(to_url)
+                    return 
+                else:
+                    msg = f'Unknown user. Please contact the admins for further information.'
+                    welcome_msg = f'{msg} {username}'
+                    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
+                    resp = requests.get(to_url)
+                    return
+                    
 @app.route("/", methods=['GET','POST'])
 def hello_world():
     if request.method == 'POST':
