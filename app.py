@@ -29,13 +29,14 @@ def loadUsernames():
     headers = {
         "accept": "application/json",
         "Notion-Version": "2022-06-28",
-        "content-type": "application/json"
+        "content-type": "application/json",
+        "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
     }
 
-    response = requests.request("POST", url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=headers)
 
     data = response.text
-    # turn JSON string into python dict
+    # turn JSON string back into python dictionary
     parsed = json.loads(data)
 
     username_dict = {}
@@ -83,7 +84,7 @@ def welcome_message(item):
                     to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={welcome_msg}&parse_mode=HTML'
                     resp = requests.get(to_url)
                     return
-
+                    
 @app.route("/", methods=['GET','POST'])
 def hello_world():
     if request.method == 'POST':
