@@ -96,7 +96,7 @@ def turnStatusToClosed(page_id):
         "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
     }
 
-    response = requests.patch(url, headers=headers)
+    response = requests.request("PATCH", url, json=payload, headers=headers)
 
     print(response.text)
 
