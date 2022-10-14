@@ -146,6 +146,7 @@ def addUserResponse(item,userStatus=""):
     }
         
     response = requests.post(url, json=payload, headers=HEADERS)
+    print(response.text)
 
 
 def welcome_message(item):
