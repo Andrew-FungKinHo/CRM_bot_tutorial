@@ -16,7 +16,7 @@ HEADERS = {
     "content-type": "application/json",
     "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
 }
-BANNED_USERNAMES = ["yeetorbeyeeted69"]
+BANNED_USERNAMES = []
 # 576894
 BANNED_USER_IDS = []
 
