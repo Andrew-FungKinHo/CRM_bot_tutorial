@@ -10,6 +10,16 @@ import datetime
 TOKEN = '5780584485:AAHHZ2r5hl-n1tii7xs8tnA59_CHskI--KU'
 NOTION_BEAR_TOKEN = 'secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL'
 DATABASE_LINK = 'https://www.notion.so/dc9c9681720a4941a317e75312ab9d69?v=f97c78618a924a2488c38c31f6b2f333'
+HEADERS = {
+    "accept": "application/json",
+    "Notion-Version": "2022-06-28",
+    "content-type": "application/json",
+    "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
+}
+BANNED_USERNAMES = ["yeetorbeyeeted69"]
+# 576894
+BANNED_USER_IDS = []
+
 
 app = Flask(__name__)
 
@@ -30,14 +40,8 @@ def loadUsernames():
     url = "https://api.notion.com/v1/databases/dc9c9681720a4941a317e75312ab9d69/query"
 
     payload = {"page_size": 100}
-    headers = {
-        "accept": "application/json",
-        "Notion-Version": "2022-06-28",
-        "content-type": "application/json",
-        "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
-    }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=HEADERS)
 
     data = response.text
     # turn JSON string back into python dictionary
@@ -89,19 +93,59 @@ def turnStatusToClosed(page_id):
             "Date": {"date": {"start": datetime.datetime.today().strftime("%Y-%m-%d")}}
         }
     }
-    headers = {
-        "accept": "application/json",
-        "Notion-Version": "2022-06-28",
-        "content-type": "application/json",
-        "Authorization": "Bearer secret_2yCYSZ3nvxL0BNPjN6bU8NBOSRtdIHgXkxOwUq48PFL"
-    }
 
-    response = requests.patch(url, headers=headers, json=payload)
+
+    response = requests.patch(url, headers=HEADERS, json=payload)
 
     print(response.text)
 
-# def addUserResponse():
-
+def addUserResponse(item,userStatus=""):
+    url = "https://api.notion.com/v1/pages/"
+    payload = {
+        "parent": {
+            "database_id": '30b44a61cc184d3b888d3f586b294d0d'
+        },
+        "properties": {
+            "Message ID": {
+                "number": item["message_id"]
+            },
+            "Username": {
+                "title": [
+                    {
+                        "text": {
+                            "content": f"@{item['from']['username']}"
+                        }
+                    }
+                ]
+            },
+            "Message": {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": item['text']
+                        }
+                    }
+                ]
+            },
+            "Remarks": {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": userStatus
+                        }
+                    }
+                ]
+            },
+            "Message_datetime_UNIX": {
+                "number": item['date'] * 1000
+            },
+            "User ID": {
+                "number": item['from']['id']
+            }
+        }
+    }
+        
+    response = requests.post(url, json=payload, headers=HEADERS)
 
 
 def welcome_message(item):
@@ -113,6 +157,13 @@ def welcome_message(item):
     customers = loadUsernames()
 
     if 'text' in item:
+        # check if the user has been banned
+        if user_id in BANNED_USER_IDS or username in BANNED_USERNAMES:
+            addUserResponse(item,userStatus="Banned user")
+            sendMessage("You have been banned by this bot", item)
+            return
+
+        addUserResponse(item)
         if item['text'].lower() == '/start':
             if username in customers.keys():
                 print(customers[username])
@@ -126,6 +177,7 @@ def welcome_message(item):
                     sendMessage(f'Your previous request has been closed. Please contact the admins for further information.',item)
                     return 
                 else:
+                    addUserResponse(item,userStatus="Unknown user")
                     sendMessage(f'Unknown user. Please contact the admins for further information.',item)
                     return
                     
