@@ -20,8 +20,8 @@ HEADERS = {
 }
 BANNED_USERNAMES =  os.getenv("BANNED_USERNAMES")
 # 576894
-BANNED_USER_IDS = os.getenv("BANNED_USER_IDS")
-
+BANNED_USER_IDS = list(map(int,os.getenv("BANNED_USER_IDS")
+))
 
 app = Flask(__name__)
 
