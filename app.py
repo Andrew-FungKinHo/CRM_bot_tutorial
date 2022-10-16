@@ -202,7 +202,7 @@ def addUserToDatabase(username,status,product):
             "database_id": 'dc9c9681720a4941a317e75312ab9d69'
         },
         "properties": {
-            "Username": {
+            "User": {
                 "title": [
                     {
                         "text": {
