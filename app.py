@@ -85,6 +85,52 @@ def sendLocalSourceFiles(item, product):
             print(f'File:   {filename} is sent')
             time.sleep(0.75)
 
+def askingProductQuestion(item):
+    chat_id = item["chat"]["id"]
+    question = 'Which product is the customer interested in purchasing?'
+    payload = {
+        "chat_id": chat_id,
+        "text": question,
+        "reply_markup": {
+            "one_time_keyboard": True,
+            "resize_keyboard": True,
+            "remove_keyboard": True,
+            "keyboard": [
+                [
+                    {
+                        "text": "Product A is targeted",
+                        "callback_data": "productA"
+                    }
+                ],
+                [
+                    {
+                        "text": "Product B is targeted",
+                        "callback_data": "productB"
+                    }
+                ]
+            ]
+        }
+    }
+
+    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
+    r = requests.post(to_url, json=payload)
+    print(f'Status code: {r.status_code}, Response: {r.json()}')
+
+def removeKeyboard(item):
+    chat_id = item["chat"]["id"]
+    sendText = "removing keyboard"
+    payload = {
+        "chat_id": chat_id,
+        "text": sendText,
+        "reply_markup": {
+            "remove_keyboard": True
+        }
+    }
+
+    to_url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
+    r = requests.post(to_url, json=payload)
+    print(f'Status code: {r.status_code}, Response: {r.json()}')
+
 def turnStatusToClosed(page_id):
     url = f"https://api.notion.com/v1/pages/{page_id}"
 
@@ -149,6 +195,36 @@ def addUserResponse(item,userStatus=""):
     response = requests.post(url, json=payload, headers=HEADERS)
     print(response.text)
 
+def addUserToDatabase(username,status,product):
+    url = "https://api.notion.com/v1/pages/"
+    payload = {
+        "parent": {
+            "database_id": 'dc9c9681720a4941a317e75312ab9d69'
+        },
+        "properties": {
+            "Username": {
+                "title": [
+                    {
+                        "text": {
+                            "content": username
+                        }
+                    }
+                ]
+            },
+            "Status": {
+                "select": {
+                    "name": status
+                }
+            },
+            "Product": {
+                "select": {
+                    "name": product
+                }
+            }
+        }
+    }
+    response = requests.post(url, json=payload, headers=HEADERS)
+    print(response.text)
 
 def welcome_message(item):
     print(item)
@@ -178,10 +254,41 @@ def welcome_message(item):
                 elif customers[username][1] == 'Closed':
                     sendMessage(f'Your previous request has been closed. Please contact the admins for further information.',item)
                     return 
+
+                elif customers[username][1] == 'Admin':
+                    sendMessage('Hello admin. What customer do you want to add?',item)
+                    askingProductQuestion(item)
+                    return
                 else:
                     addUserResponse(item,userStatus="Unknown user")
                     sendMessage(f'Unknown user. Please contact the admins for further information.',item)
                     return
+
+        elif item['text'] == "Product A is targeted":
+            removeKeyboard(item)
+            addUserToDatabase(" ","Lead","Product A")
+
+        elif item['text'] == "Product B is targeted":
+            removeKeyboard(item)
+            addUserToDatabase(" ","Lead","Product B")
+
+        elif item['text'].startswith("admin add:"):
+            if customers[username][1] == 'Admin':
+                inputItems = item['text'][10:].split(",")
+                if len(inputItems) == 2:
+                    username, product = inputItems
+                    addUserToDatabase(username,"Pending",product)
+                    sendMessage(f'User {username} with the status Pending has been added successfully.',item)
+                    return
+                else:
+                    sendMessage("Not enough values to unpack",item)
+                    return
+            else:
+                sendMessage(f'You are not authorized to add users to the database.',item)
+                return
+        else:
+            sendMessage('Command not found. Please start the bot with the command /start', item)
+            return
                     
 @app.route("/", methods=['GET','POST'])
 def hello_world():
