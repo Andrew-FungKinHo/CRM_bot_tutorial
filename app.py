@@ -6,23 +6,22 @@ import json
 import os 
 import time
 import datetime
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 
-TOKEN = os.getenv("TOKEN")
-NOTION_BEAR_TOKEN = os.getenv("NOTION_BEAR_TOKEN")
+TOKEN = os.environ("TOKEN")
+NOTION_BEAR_TOKEN = os.environ("NOTION_BEAR_TOKEN")
 HEADERS = {
-    "accept": os.getenv("ACCEPT"),
+    "accept": os.environ("ACCEPT"),
     "Notion-Version": os.getenv("NOTION_VERSION"),
     "content-type":  os.getenv("CONTENT_TYPE"),
     "Authorization": os.getenv("AUTHORIZATION")
 }
-BANNED_USERNAMES = json.loads(os.getenv("BANNED_USERNAMES"))
+BANNED_USERNAMES = []
 # 576894
-BANNED_USER_IDS = list(map(int, json.loads(os.getenv("BANNED_USER_IDS"))))
-
+BANNED_USER_IDS = []
 
 app = Flask(__name__)
 
