@@ -11,13 +11,13 @@ import datetime
 # load_dotenv()
 
 
-TOKEN = os.environ("TOKEN")
-NOTION_BEAR_TOKEN = os.environ("NOTION_BEAR_TOKEN")
+TOKEN = os.environ["TOKEN"]
+NOTION_BEAR_TOKEN = os.environ["NOTION_BEAR_TOKEN"]
 HEADERS = {
-    "accept": os.environ("ACCEPT"),
-    "Notion-Version": os.environ("NOTION_VERSION"),
-    "content-type":  os.environ("CONTENT_TYPE"),
-    "Authorization": os.environ("AUTHORIZATION")
+    "accept": os.environ["ACCEPT"],
+    "Notion-Version": os.environ["NOTION_VERSION"],
+    "content-type":  os.environ["CONTENT_TYPE"],
+    "Authorization": os.environ["AUTHORIZATION"]
 }
 BANNED_USERNAMES = []
 # 576894
