@@ -15,9 +15,9 @@ TOKEN = os.environ("TOKEN")
 NOTION_BEAR_TOKEN = os.environ("NOTION_BEAR_TOKEN")
 HEADERS = {
     "accept": os.environ("ACCEPT"),
-    "Notion-Version": os.getenv("NOTION_VERSION"),
-    "content-type":  os.getenv("CONTENT_TYPE"),
-    "Authorization": os.getenv("AUTHORIZATION")
+    "Notion-Version": os.environ("NOTION_VERSION"),
+    "content-type":  os.environ("CONTENT_TYPE"),
+    "Authorization": os.environ("AUTHORIZATION")
 }
 BANNED_USERNAMES = []
 # 576894
