@@ -18,10 +18,9 @@ HEADERS = {
     "content-type":  os.getenv("CONTENT_TYPE"),
     "Authorization": os.getenv("AUTHORIZATION")
 }
-BANNED_USERNAMES =  os.getenv("BANNED_USERNAMES")
-# 576894
-BANNED_USER_IDS = list(map(int,os.getenv("BANNED_USER_IDS")
-))
+BANNED_USERNAMES =  json.loads(os.getenv("BANNED_USERNAMES"))
+
+BANNED_USER_IDS = list(map(int,json.loads(os.getenv("BANNED_USER_IDS"))))
 
 app = Flask(__name__)
 
