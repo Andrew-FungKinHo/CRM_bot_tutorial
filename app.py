@@ -20,7 +20,6 @@ HEADERS = {
     "Authorization": os.environ["AUTHORIZATION"]
 }
 BANNED_USERNAMES = []
-# 576894
 BANNED_USER_IDS = []
 
 app = Flask(__name__)
